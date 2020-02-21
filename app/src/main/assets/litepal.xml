@@ -7,8 +7,9 @@
 
     <list>
        <mapping class = "com.example.wanghui.coolweather.db.Province"  ></mapping>
-        <mapping class = "com.example.wanghui.coolweather.db.County"  ></mapping>
         <mapping class = "com.example.wanghui.coolweather.db.City"  ></mapping>
+        <mapping class = "com.example.wanghui.coolweather.db.County"  ></mapping>
+
 
     </list>
 </litepal>
