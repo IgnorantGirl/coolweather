@@ -1,6 +1,9 @@
 package com.example.wanghui.coolweather.util;
 
+import com.example.wanghui.coolweather.*;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,11 +20,15 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 
+import com.example.wanghui.coolweather.MainActivity;
 import com.example.wanghui.coolweather.R;
+import com.example.wanghui.coolweather.WeatherActivity;
 import com.example.wanghui.coolweather.db.City;
 import com.example.wanghui.coolweather.db.County;
 import com.example.wanghui.coolweather.db.Province;
+import com.example.wanghui.coolweather.gson.Weather;
 
 import org.litepal.crud.DataSupport;
 
@@ -132,7 +139,42 @@ public class ChooseAreaFragment extends Fragment {
                     selectedCity=cityList.get(position);
                     //加载县级数据
                     queryCounties();
+
                 }
+                else if(currentLevel ==LEVEL_COUNTY){
+                    /**
+                     * 新加判断条件，如果当前级别是LEVEL_COUNTY，就启动WeatherActivity，
+                     * 并把当前选中县的天气id传递过去
+                     * */
+                    String  weatherId = countyList.get(position).getWeatherId();
+
+                    //使用instanceof关键字可以要拿过来判断一个对象是否属于某个类的实例
+                    if(getActivity() instanceof MainActivity){
+                        Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                        intent.putExtra("weather_id",weatherId);
+                        startActivity(intent);
+                        getActivity().finish();
+                    }else if(getActivity() instanceof WeatherActivity){
+                        //如果是在WeatherActivity当中，那就关闭滑动功能，显示下拉刷新进度条，然后请求新城市的天气信息
+                        WeatherActivity activity = (WeatherActivity)getActivity();
+
+                        //对，改的就是这！
+
+                        SharedPreferences.Editor editor =
+                                PreferenceManager.getDefaultSharedPreferences(getContext())
+                                        .edit();
+                        editor.putString("weather_id", weatherId);
+                        editor.apply();
+
+                        activity.drawerLayout.closeDrawers();
+                        activity.swipeRefresh.setRefreshing(true);
+                        activity.requestWeather(weatherId);
+
+                    }
+
+
+                }
+
             }
         });
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -218,8 +260,6 @@ public class ChooseAreaFragment extends Fragment {
             int provinceCode = selectedProvince.getProvinceCode();
             int cityCode = selectedCity.getCityCode();
             String address = "http://guolin.tech/api/china/" +provinceCode+"/"+ cityCode;
-
-//            String address = "http://guolin.tech/api/china/30/295";
             queryFromServer(address,"county");
         }
 
